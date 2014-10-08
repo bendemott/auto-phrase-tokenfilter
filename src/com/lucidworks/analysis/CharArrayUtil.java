@@ -18,6 +18,15 @@ public class CharArrayUtil {
         return true;
     }
 
+    public static boolean equalsStemmed(char[] buffer, char[] phrase) {
+        if (buffer == null || phrase == null) return false;
+
+        char[] stemmedBuffer = Stemmer.stem(buffer);
+        char[] stemmedPhrase = Stemmer.stem(phrase);
+
+        return equals(stemmedBuffer, stemmedPhrase);
+    }
+
     public static boolean startsWith(char[] buffer, char[] phrase) {
         if (buffer == null || phrase == null) return false;
 

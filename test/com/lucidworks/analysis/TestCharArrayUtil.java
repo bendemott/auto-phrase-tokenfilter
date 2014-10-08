@@ -192,4 +192,72 @@ public class TestCharArrayUtil extends TestCase {
         char[] actual = CharArrayUtil.getFirstTerm(input);
         assertEquals(new String(expected), new String(actual));
     }
+
+    public void testEqualsStemmedNullInput() {
+        boolean actual = CharArrayUtil.equalsStemmed(null, null);
+        assertFalse(actual);
+    }
+
+    public void testEqualsStemmedEmptyInput() {
+        char[] buffer = "".toCharArray();
+        char[] phrase = "".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertTrue(actual);
+    }
+
+    public void testEqualsStemmedNoStemInputMatch() {
+        char[] buffer = "sky".toCharArray();
+        char[] phrase = "sky".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertTrue(actual);
+    }
+
+    public void testEqualsStemmedNoStemInputNoMatch() {
+        char[] buffer = "sky".toCharArray();
+        char[] phrase = "land".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertFalse(actual);
+    }
+
+    public void testEqualsStemmedStemInputMatch() {
+        char[] buffer = "wheels".toCharArray();
+        char[] phrase = "wheel".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertTrue(actual);
+    }
+
+    public void testEqualsStemmedStemInputMatch2() {
+        char[] buffer = "wheel".toCharArray();
+        char[] phrase = "wheels".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertTrue(actual);
+    }
+
+    public void testEqualsStemmedStemInputMatchBoth() {
+        char[] buffer = "electricity".toCharArray();
+        char[] phrase = "electrical".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertTrue(actual);
+    }
+
+    public void testEqualsStemmedStemInputNoMatch() {
+        char[] buffer = "wheels".toCharArray();
+        char[] phrase = "land".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertFalse(actual);
+    }
+
+    public void testEqualsStemmedStemInputNoMatch2() {
+        char[] buffer = "land".toCharArray();
+        char[] phrase = "wheels".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertFalse(actual);
+    }
+
+    public void testEqualsStemmedStemInputNoMatchBoth() {
+        char[] buffer = "electricity".toCharArray();
+        char[] phrase = "wheels".toCharArray();
+        boolean actual = CharArrayUtil.equalsStemmed(buffer, phrase);
+        assertFalse(actual);
+    }
 }
