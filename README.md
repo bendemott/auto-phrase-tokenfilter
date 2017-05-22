@@ -1,7 +1,17 @@
 auto-phrase-tokenfilter
 =======================
 
-Lucene Auto Phrase TokenFilter implementation
+**Lucene Auto Phrase TokenFilter implementation**
+
+Merge With:
+- https://github.com/kutschkem/auto-phrase-tokenfilter/commit/544373c756311128a22e1b132926e19ca4f2a43f
+  (provides memory fixes)
+- https://github.com/kantega/auto-phrase-tokenfilter/commit/40d18d7b63f6165ab8c356d2082f880816802c86
+  (log fixes, a few other niceties [possibly already addressed])
+- https://github.com/kantega/auto-phrase-tokenfilter/commit/8d3003b90d975c9cef93bcbbbc1b65e433365ee0
+  (alternative version of the POM.xml file, if needed/newer)
+- https://github.com/vedina/auto-phrase-tokenfilter/commit/79ed25c2dbf19ebd76464edb6b669e2b51c5f840
+  (solr 6.4 include updates, and code updates ...)
 
 
 Performs "auto phrasing" on a token stream. Auto phrases refer to sequences of tokens that
@@ -13,7 +23,8 @@ The Autophrasing filter can be combined with a synonym filter to handle cases in
 suffix terms in a phrase are synonymous with the phrase, but where other parts of the phrase are
 not. This enables searching within the phrase to occur selectively, rather than randomly.
 
-##Overview
+Overview
+--------
 
 Search engines work by 'inverse' mapping terms or 'tokens' to the documents that contain
 them. Sometimes a single token uniquely describes a real-world entity or thing but in many
@@ -24,7 +35,8 @@ this type of ambiguity - search engines return documents that contain the words 
 necessarily the 'things' they are looking for. Doing a better job of mapping tokens (the 'units'
 of a search index) to specific things or concepts will help to address this problem.
 
-##Algorithm
+Algorithm
+---------
 
 The auto phrase token filter uses a list of phrases that should be kept together as single 
 tokens. As tokens are received by the filter, it keeps a partial phrase that matches 
@@ -35,7 +47,9 @@ the now unmatched tokens that it has collected. If a phrase match completes, tha
 will be emitted to the next filter in the chain.  If a token does not match any of the 
 leading terms in its phrase list, it will be passed on to the next filter unmolested.
 
-##Example schema.xml Configuration
+Example schema.xml Configuration
+--------------------------------
+
 <pre>
 &lt;fieldType name="text_autophrase" class="solr.TextField" positionIncrementGap="100">
   &lt;analyzer type="index">
@@ -54,7 +68,8 @@ leading terms in its phrase list, it will be passed on to the next filter unmole
 &lt;/fieldType>
 </pre>
 
-##Input Parameters:
+Input Parameters
+----------------
 
 <table>
  <tr><td>phrases</td><td>file containing auto phrases (one per line)</td><tr>
@@ -62,7 +77,10 @@ leading terms in its phrase list, it will be passed on to the next filter unmole
  <tr><td>replaceWhitespaceWith</td><td>single character to use to replace whitespace in phrase</td></tr>
 </table>
 
-##Query Parser Plugin
+Query Parser Plugin
+--------------------
+
+**Note:** `As of solr 6.4 the query praser is no longer needed, whitespace can be preserved on search input using the ``SOW`` parameter.`
 
 Due to an issue with Lucene/Solr query parsing, the AutoPhrasingTokenFilter is not effective at query time as
 part of a standard analyzer chain. This is due to the LUCENE-2605 issue in which the query parser sends each token
@@ -92,7 +110,8 @@ And a new search handler that uses the query parser:
   &lt;/requestHandler>
 </pre>
 
-##Example Test Code:
+Example Test Code:
+------------------
 
 The following Java code can be used to show what the AutoPhrasingTokenFilter does:
 
@@ -142,3 +161,9 @@ token:'is'
 token:'so'
 token:'high'
 </pre>
+
+Deployment Procedure
+--------------------
+
+To build the autophrasing token filter from source code you will need to install Apache Maven (https://maven.apache.org/download.cgi). Install Maven and then in a linux/unix shell or Windows DOS command window, change to the auto-phrase-tokenfilter directory (i.e. where you downloaded this project to) and type: mvn package
+
