@@ -678,5 +678,45 @@ public class TestAutoPhrasingTokenFilter extends BaseTokenStreamTestCase {
                 new int[] {1, 1, 1});
 
     }
+    
+    public void testTrigramExtraPhrasePickLongest() throws Exception {
+        final CharArraySet phrases = getPhraseSets("business intelligence developer", "business intelligence");
+        final String input = "business intelligence developer";
+        Analyzer analyzer = new AutoPhrasingAnalyzer(phrases, '_');
+        assertAnalyzesTo(analyzer, input,
+                new String[] {"business_intelligence_developer"},
+                new int[] {0},
+                new int[] {31},
+                new int[] {1});
+        
+        /* original: business intelligence developer
+          increment:                1               
+             tokens: business intelligence developer
+          positions: -------------------------------
+            lengths:                1               
+           sequence:                1               
+                     0123456789012345678901234567890
+                              10        20        30
+        */
+
+    }
+    
+    public void testAnalyzerReuse() throws Exception {
+        final CharArraySet phrases = getPhraseSets("business administrator", "devops engineer");
+        final String input1 = "business administrator";
+        final String input2 = "devops engineer";
+        Analyzer analyzer = new AutoPhrasingAnalyzer(phrases, '_');
+        assertAnalyzesTo(analyzer, input1,
+                new String[] {"business_administrator"},
+                new int[] {0},
+                new int[] {22},
+                new int[] {1});
+        
+        assertAnalyzesTo(analyzer, input2,
+                new String[] {"devops_engineer"},
+                new int[] {0},
+                new int[] {15},
+                new int[] {1});
+    }
 
 }

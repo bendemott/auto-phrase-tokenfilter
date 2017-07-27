@@ -30,7 +30,6 @@ import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.CharArrayMap;
 import org.apache.lucene.analysis.CharArraySet;
-import org.apache.lucene.util.Version;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.System.arraycopy;
-import org.apache.lucene.analysis.tokenattributes.PositionLengthAttribute;
+
 /**
  * Performs "auto phrasing" on a token stream. Auto phrases refer to sequences of tokens that
  * are meant to describe a single thing and should be searched for as such. When these phrases
@@ -52,6 +51,12 @@ import org.apache.lucene.analysis.tokenattributes.PositionLengthAttribute;
  * The filter will produce single-tokens where no phrase-match was found.  In this case is behaves
  * like a pass-through filter that does not affect tokens or their positions.
  * 
+ * Currently does not handle Synonyms correctly, if the input stream contains a synonym that
+ * occupies the same position as another token. Both tokens will not be searched for a match...
+ * 
+ * The original version of this filter supported outputting single-terms alongside phrases for
+ * the purposes of having single-terms available to search.  This greatly complicated the filter.
+ * 
  */
 
 @SuppressWarnings({"unchecked", "PrimitiveArrayArgumentToVariableArgMethod"})
@@ -60,12 +65,10 @@ public final class AutoPhrasingTokenFilter extends TokenFilter {
     private CharTermAttribute charTermAttr;
     private PositionIncrementAttribute positionIncrementAttr;
     private OffsetAttribute offsetAttr;
-    private PositionLengthAttribute positionLengthAttr;
 
     // replaceWhitespaceWith stores the value passed into this filter during construction,
     // white-space in the token will be replaced with this character. (space) is recommended.
     private Character replaceWhitespaceWith = null;
-    private Version luceneMatchVersion;
 
     // maps the first word in each auto phrase to all phrases that start with that word
     private final CharArrayMap<CharArraySet> phraseMapFirstWordToPhrases;
@@ -73,7 +76,6 @@ public final class AutoPhrasingTokenFilter extends TokenFilter {
     private final ArrayList<char[]> tokenTerms = new ArrayList<>();
     private final ArrayList<Integer> tokenEndPositions = new ArrayList<>();
     private final ArrayList<Integer> tokenStartPositions = new ArrayList<>();
-    private final ArrayList<Integer> tokenLengths = new ArrayList<>();
     private final ArrayList<Integer> tokenIncrements = new ArrayList<>();
     
     // currentTokenIdx acts as a pointer to the iterator through the input stream.
@@ -162,7 +164,6 @@ public final class AutoPhrasingTokenFilter extends TokenFilter {
             char[] termBuf = charTermAttr.buffer();
             char[] nextTok = new char[charTermAttr.length()];
             arraycopy(termBuf, 0, nextTok, 0, charTermAttr.length());
-
             tokenTerms.add(nextTok);
         }
     }
@@ -188,6 +189,7 @@ public final class AutoPhrasingTokenFilter extends TokenFilter {
         tokenStartPositions.clear();
         tokenIncrements.clear();
         currentTokenIdx = -1;
+        charTermAttr.setLength(0);
         super.reset();
     }
 
@@ -348,13 +350,22 @@ public final class AutoPhrasingTokenFilter extends TokenFilter {
         int lastTokenIdx = currentTokenIdx + spanTokens -1;
         token = CharArrayUtil.replaceWhitespace(token, replaceWhitespaceWith);
         
+
+
+        
         int startOffset = tokenStartPositions.get(currentTokenIdx);
         int endOffset = tokenEndPositions.get(lastTokenIdx);
         int increment = tokenIncrements.get(currentTokenIdx);
         
-        charTermAttr.append(new String(token));
+        // Reset the term length
+        charTermAttr.setEmpty(); // may not be needed...
+        charTermAttr.resizeBuffer(token.length);
+        // Copies the contents of buffer, starting at offset for length characters, into the termBuffer array.
+        charTermAttr.copyBuffer(token, 0, token.length);
         offsetAttr.setOffset(startOffset, endOffset);
         positionIncrementAttr.setPositionIncrement(increment);
+        
+        LazyLog.logDebug("Emitting token: %s, cidx:%d lidx: %d", token, currentTokenIdx, lastTokenIdx);
         
         currentTokenIdx += Math.max(spanTokens, 1);
     }
